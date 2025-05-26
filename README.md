@@ -108,8 +108,6 @@ html := godump.DumpHTML(user)
 * The first line shows the **file and line number** where `godump.Dump()` was invoked.
 * Helpful for finding where the dump happened during debugging.
 
----
-
 ### 🔎 Type Names
 
 ```text
@@ -117,8 +115,6 @@ html := godump.DumpHTML(user)
 ```
 
 * Fully qualified struct name with its package path.
-
----
 
 ### 🔐 Visibility Markers
 
@@ -129,8 +125,6 @@ html := godump.DumpHTML(user)
 
 * `+` → Exported (public) field
 * `-` → Unexported (private) field (accessed reflectively)
-
----
 
 ### 🔄 Cyclic References
 
@@ -143,8 +137,6 @@ If a pointer has already been printed:
 * Prevents infinite loops in circular structures
 * References point back to earlier object instances
 
----
-
 ### 🔢 Slices and Maps
 
 ```text
@@ -155,8 +147,6 @@ If a pointer has already been printed:
 * Array/slice indices and map keys are shown with `=>` formatting and indentation
 * Slices and maps are truncated if `maxItems` is exceeded
 
----
-
 ### 🔣 Escaped Characters
 
 ```text
@@ -165,8 +155,6 @@ If a pointer has already been printed:
 
 * Control characters like `\n`, `\t`, `\r`, etc. are safely escaped
 * Strings are truncated after `maxStringLen` runes
-
----
 
 ### 🧩 Supported Types
 
