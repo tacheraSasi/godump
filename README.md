@@ -91,8 +91,6 @@ html := godump.DumpHTML(user)
 }
 ```
 
----
-
 ## 🧩 License
 
 MIT © [goforj](https://github.com/goforj)
