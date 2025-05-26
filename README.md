@@ -1,5 +1,3 @@
-# godump
-
 <p align="center">
   <img src="./assets/godump.png" width="600" alt="godump logo">
 </p>
@@ -27,6 +25,8 @@
 <strong>HTML Output Example</strong><br>
   <img src="./assets/demo-html.png" width="800">
 </p>
+
+# godump
 
 ## ✨ Features
 
