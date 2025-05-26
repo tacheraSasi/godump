@@ -2,9 +2,9 @@
   <img src="./assets/godump.png" width="600" alt="godump logo">
 </p>
 
-<blockquote align="center">
+<p align="center">
     Pretty-print and debug Go structs with a Laravel-inspired developer experience.
-</blockquote>
+</p>
 
 <p align="center">
     <a href="https://pkg.go.dev/github.com/goforj/godump"><img src="https://pkg.go.dev/badge/github.com/goforj/godump.svg" alt="Go Reference"></a>
