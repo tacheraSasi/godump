@@ -19,13 +19,13 @@
 </p>
 
 <p align="center">
-<strong>Terminal output example</strong><br>
-  <img src="./assets/demo-terminal.png" width="600">
+<strong>Terminal Output Example</strong><br>
+  <img src="./assets/demo-terminal.png" width="800">
 </p>
 
 <p align="center">
-<strong>HTML output example</strong><br>
-  <img src="./assets/demo-html.png" width="600">
+<strong>HTML Output Example</strong><br>
+  <img src="./assets/demo-html.png" width="800">
 </p>
 
 ## ✨ Features
