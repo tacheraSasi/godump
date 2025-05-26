@@ -24,12 +24,12 @@
 
 <p align="center">
 <strong>Terminal Output Example</strong><br>
-  <img src="./assets/demo-terminal.png" width="800">
+  <img src="./assets/demo-terminal.png">
 </p>
 
 <p align="center">
 <strong>HTML Output Example</strong><br>
-  <img src="./assets/demo-html.png" width="800">
+  <img src="./assets/demo-html.png">
 </p>
 
 ## ✨ Features
