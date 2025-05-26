@@ -19,12 +19,12 @@
 </p>
 
 <p align="center">
-<strong>Terminal output example</strong>
+<strong>Terminal output example</strong><br>
   <img src="./assets/demo-terminal.png" width="600">
 </p>
 
 <p align="center">
-<strong>HTML output example</strong>
+<strong>HTML output example</strong><br>
   <img src="./assets/demo-html.png" width="600">
 </p>
 
