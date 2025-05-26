@@ -1,21 +1,22 @@
 # godump
 
 <p align="center">
-  <img src="./assets/godump.png" width="400" alt="godump logo">
+  <img src="./assets/godump.png" width="600" alt="godump logo">
 </p>
 
-> Pretty-print and debug Go structs with a Laravel-inspired developer experience.
+<blockquote align="center">
+    Pretty-print and debug Go structs with a Laravel-inspired developer experience.
+</blockquote>
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/goforj/godump.svg)](https://pkg.go.dev/github.com/goforj/godump)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+<p align="center">
+    <a href="https://pkg.go.dev/github.com/goforj/godump"><img src="https://pkg.go.dev/badge/github.com/goforj/godump.svg" alt="Go Reference"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+</p>
 
----
-
-`godump` is a developer-friendly, zero-dependency debug dumper for Go. It provides pretty, colorized terminal output of your structs, slices, maps, and more — complete with cyclic reference detection and control character escaping.
-
-Inspired by tools like Laravel's `dump()` and Symfony's VarDumper.
-
----
+<p align="center">
+  <code>godump</code> is a developer-friendly, zero-dependency debug dumper for Go. It provides pretty, colorized terminal output of your structs, slices, maps, and more — complete with cyclic reference detection and control character escaping.
+    Inspired by tools like Laravel's <code>dump()</code> and Symfony's VarDumper.
+</p>
 
 ## ✨ Features
 
@@ -25,15 +26,11 @@ Inspired by tools like Laravel's `dump()` and Symfony's VarDumper.
 - 🧪 Handles slices, maps, nested structs, pointers, time, etc.
 - 🪄 Control character escaping (`\n`, `\t`, etc.)
 
----
-
 ## 📦 Installation
 
 ```bash
 go get github.com/goforj/godump
 ````
-
----
 
 ## 🚀 Usage
 
@@ -41,21 +38,21 @@ go get github.com/goforj/godump
 import "github.com/goforj/godump"
 
 type Profile struct {
-	Age   int
-	Email string
+Age   int
+Email string
 }
 
 type User struct {
-	Name    string
-	Profile Profile
+Name    string
+Profile Profile
 }
 
 user := User{
-	Name: "Alice",
-	Profile: Profile{
-		Age:   30,
-		Email: "alice@example.com",
-	},
+Name: "Alice",
+Profile: Profile{
+Age:   30,
+Email: "alice@example.com",
+},
 }
 
 // Pretty-print to stdout
@@ -70,8 +67,6 @@ output := godump.DumpStr(user)
 // HTML for web UI output
 html := godump.DumpHTML(user)
 ```
-
----
 
 ## 🧪 Example Output
 
