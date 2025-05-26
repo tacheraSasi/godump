@@ -167,3 +167,8 @@ If a pointer has already been printed:
 ## 🧩 License
 
 MIT © [goforj](https://github.com/goforj)
+
+## 📇 Author
+
+Created by [Chris Miles](https://github.com/akkadius)  
+Maintained as part of the [goforj](https://github.com/goforj) tooling ecosystem.
