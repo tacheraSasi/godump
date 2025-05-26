@@ -237,7 +237,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 				indentPrint(tw, indent+1, colorize(colorGray, "... (truncated)\n"))
 				break
 			}
-			indentPrint(tw, indent+1, fmt.Sprintf("%s => ", colorize(colorCyan, fmt.Sprintf("%2d", i))))
+			indentPrint(tw, indent+1, fmt.Sprintf("%s => ", colorize(colorCyan, fmt.Sprintf("%1d", i))))
 			printValue(tw, v.Index(i), indent+1, visited)
 			fmt.Fprintln(tw)
 		}

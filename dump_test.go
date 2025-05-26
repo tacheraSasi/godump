@@ -26,11 +26,11 @@ func TestSimpleStruct(t *testing.T) {
 	user := User{Name: "Alice", Profile: Profile{Age: 30, Email: "alice@example.com"}}
 	out := stripANSI(DumpStr(user))
 
-	assert.Contains(t, out, "#debug.User")
+	assert.Contains(t, out, "#godump.User")
 	assert.Contains(t, out, "+Name")
 	assert.Contains(t, out, "\"Alice\"")
 	assert.Contains(t, out, "+Profile")
-	assert.Contains(t, out, "#debug.Profile")
+	assert.Contains(t, out, "#godump.Profile")
 	assert.Contains(t, out, "+Age")
 	assert.Contains(t, out, "30")
 	assert.Contains(t, out, "+Email")
