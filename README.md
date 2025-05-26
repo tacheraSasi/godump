@@ -17,7 +17,7 @@
 
 <p align="center">
   <code>godump</code> is a developer-friendly, zero-dependency debug dumper for Go. It provides pretty, colorized terminal output of your structs, slices, maps, and more — complete with cyclic reference detection and control character escaping.
-    Inspired by tools like Laravel's <code>dump()</code> and Symfony's VarDumper.
+    Inspired by Symfony's VarDumper which is used in Laravel's tools like <code>dump()</code> and <code>dd()</code>.
 </p>
 
 <br>
