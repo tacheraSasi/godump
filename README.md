@@ -95,6 +95,89 @@ html := godump.DumpHTML(user)
 }
 ```
 
+## 📘 How to Read the Output
+
+`godump` output is designed for clarity and traceability. Here's how to interpret its structure:
+
+### 🧭 Location Header
+
+```text
+<#dump // main.go:26
+````
+
+* The first line shows the **file and line number** where `godump.Dump()` was invoked.
+* Helpful for finding where the dump happened during debugging.
+
+---
+
+### 🔎 Type Names
+
+```text
+#main.User
+```
+
+* Fully qualified struct name with its package path.
+
+---
+
+### 🔐 Visibility Markers
+
+```text
+  +Name    => "Alice"
+  -secret  => "..."
+```
+
+* `+` → Exported (public) field
+* `-` → Unexported (private) field (accessed reflectively)
+
+---
+
+### 🔄 Cyclic References
+
+If a pointer has already been printed:
+
+```text
+↩︎ &1
+```
+
+* Prevents infinite loops in circular structures
+* References point back to earlier object instances
+
+---
+
+### 🔢 Slices and Maps
+
+```text
+  0 => "value"
+  a => 1
+```
+
+* Array/slice indices and map keys are shown with `=>` formatting and indentation
+* Slices and maps are truncated if `maxItems` is exceeded
+
+---
+
+### 🔣 Escaped Characters
+
+```text
+"Line1\nLine2\tDone"
+```
+
+* Control characters like `\n`, `\t`, `\r`, etc. are safely escaped
+* Strings are truncated after `maxStringLen` runes
+
+---
+
+### 🧩 Supported Types
+
+* ✅ Structs (exported & unexported)
+* ✅ Pointers, interfaces
+* ✅ Maps, slices, arrays
+* ✅ Channels, functions
+* ✅ time.Time (nicely formatted)
+
+```
+
 ## 🧩 License
 
 MIT © [goforj](https://github.com/goforj)
