@@ -18,6 +18,16 @@
     Inspired by tools like Laravel's <code>dump()</code> and Symfony's VarDumper.
 </p>
 
+<p align="center">
+  <img src="./assets/demo-terminal.png" width="600">
+  Terminal output example
+</p>
+
+<p align="center">
+  <img src="./assets/demo-html.png" width="600">
+  HTML output example
+</p>
+
 ## ✨ Features
 
 - 🧠 Struct field inspection with visibility markers (`+`, `-`)
@@ -38,21 +48,21 @@ go get github.com/goforj/godump
 import "github.com/goforj/godump"
 
 type Profile struct {
-Age   int
-Email string
+    Age   int
+    Email string
 }
 
 type User struct {
-Name    string
-Profile Profile
+    Name    string
+    Profile Profile
 }
 
 user := User{
-Name: "Alice",
-Profile: Profile{
-Age:   30,
-Email: "alice@example.com",
-},
+    Name: "Alice",
+    Profile: Profile{
+        Age:   30,
+        Email: "alice@example.com",
+    },
 }
 
 // Pretty-print to stdout
