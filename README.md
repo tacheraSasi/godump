@@ -164,8 +164,6 @@ If a pointer has already been printed:
 * ✅ Channels, functions
 * ✅ time.Time (nicely formatted)
 
-```
-
 ## 🧩 License
 
 MIT © [goforj](https://github.com/goforj)
