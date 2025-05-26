@@ -21,11 +21,13 @@
 <p align="center">
   <img src="./assets/demo-terminal.png" width="600">
 <br>
+<br>
   Terminal output example
 </p>
 
 <p align="center">
   <img src="./assets/demo-html.png" width="600">
+<br>
 <br>
   HTML output example
 </p>
