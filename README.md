@@ -26,8 +26,6 @@
   <img src="./assets/demo-html.png" width="800">
 </p>
 
-# godump
-
 ## ✨ Features
 
 - 🧠 Struct field inspection with visibility markers (`+`, `-`)
