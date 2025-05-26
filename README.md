@@ -16,6 +16,8 @@
     Inspired by tools like Laravel's <code>dump()</code> and Symfony's VarDumper.
 </p>
 
+<br>
+
 <p align="center">
 <strong>Terminal Output Example</strong><br>
   <img src="./assets/demo-terminal.png" width="800">
