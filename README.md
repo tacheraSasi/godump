@@ -84,7 +84,7 @@ html := godump.DumpHTML(user)
 
 ## 🧪 Example Output
 
-```text
+```go
 <#dump // main.go:26
 #main.User
   +Name    => "Alice"
@@ -101,7 +101,7 @@ html := godump.DumpHTML(user)
 
 ### 🧭 Location Header
 
-```text
+```go
 <#dump // main.go:26
 ````
 
@@ -110,7 +110,7 @@ html := godump.DumpHTML(user)
 
 ### 🔎 Type Names
 
-```text
+```go
 #main.User
 ```
 
@@ -118,7 +118,7 @@ html := godump.DumpHTML(user)
 
 ### 🔐 Visibility Markers
 
-```text
+```go
   +Name    => "Alice"
   -secret  => "..."
 ```
@@ -130,7 +130,7 @@ html := godump.DumpHTML(user)
 
 If a pointer has already been printed:
 
-```text
+```go
 ↩︎ &1
 ```
 
@@ -139,7 +139,7 @@ If a pointer has already been printed:
 
 ### 🔢 Slices and Maps
 
-```text
+```go
   0 => "value"
   a => 1
 ```
@@ -149,7 +149,7 @@ If a pointer has already been printed:
 
 ### 🔣 Escaped Characters
 
-```text
+```go
 "Line1\nLine2\tDone"
 ```
 
