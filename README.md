@@ -50,37 +50,46 @@ go get github.com/goforj/godump
 ## 🚀 Usage
 
 ```go
-import "github.com/goforj/godump"
+package main
+
+import (
+	"fmt"
+	"github.com/goforj/godump"
+)
 
 type Profile struct {
-    Age   int
-    Email string
+	Age   int
+	Email string
 }
 
 type User struct {
-    Name    string
-    Profile Profile
+	Name    string
+	Profile Profile
 }
 
-user := User{
-    Name: "Alice",
-    Profile: Profile{
-        Age:   30,
-        Email: "alice@example.com",
-    },
+func main() {
+	user := User{
+		Name: "Alice",
+		Profile: Profile{
+			Age:   30,
+			Email: "alice@example.com",
+		},
+	}
+
+	// Pretty-print to stdout
+	godump.Dump(user)
+
+	// Dump and exit
+	godump.Dd(user) // this will print the dump and exit the program
+
+	// Get dump as string
+	output := godump.DumpStr(user)
+	fmt.Println("str", output)
+
+	// HTML for web UI output
+	html := godump.DumpHTML(user)
+	fmt.Println("html", html)
 }
-
-// Pretty-print to stdout
-godump.Dump(user)
-
-// Dump and exit
-godump.Dd(user)
-
-// Get dump as string
-output := godump.DumpStr(user)
-
-// HTML for web UI output
-html := godump.DumpHTML(user)
 ```
 
 ## 🧪 Example Output
