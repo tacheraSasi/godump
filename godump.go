@@ -116,7 +116,7 @@ func Dd(vs ...any) {
 
 // printDumpHeader prints the header for the dump output, including the file and line number.
 func printDumpHeader(out io.Writer, skip int) {
-	file, line := callerLocation(skip)
+	file, line := findFirstNonInternalFrame()
 	if file == "" {
 		return
 	}
@@ -130,6 +130,21 @@ func printDumpHeader(out io.Writer, skip int) {
 
 	header := fmt.Sprintf("<#dump // %s:%d", relPath, line)
 	fmt.Fprintln(out, colorize(colorGray, header))
+}
+
+// findFirstNonInternalFrame finds the first non-internal frame in the call stack.
+func findFirstNonInternalFrame() (string, int) {
+	for i := 2; i < 10; i++ {
+		pc, file, line, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+		fn := runtime.FuncForPC(pc)
+		if fn == nil || !strings.Contains(fn.Name(), "godump") {
+			return file, line
+		}
+	}
+	return "", 0
 }
 
 func callerLocation(skip int) (string, int) {
