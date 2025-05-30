@@ -175,6 +175,17 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		fmt.Fprint(tw, colorize(colorGray, "<invalid>"))
 		return
 	}
+	// If value implements fmt.Stringer, use it
+	if v.CanInterface() {
+		// Skip using String() for reflect.Value so we can dump internals
+		if _, skip := v.Interface().(reflect.Value); !skip {
+			if s, ok := v.Interface().(fmt.Stringer); ok {
+				fmt.Fprint(tw, colorize(colorLime, s.String())+colorize(colorGray, " #"+v.Type().String()))
+				return
+			}
+		}
+	}
+
 	// Custom handling for time.Time
 	if v.Type().PkgPath() == "time" && v.Type().Name() == "Time" {
 		if t, ok := v.Interface().(interface{ String() string }); ok {
