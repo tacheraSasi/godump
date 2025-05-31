@@ -149,6 +149,7 @@ func findFirstNonInternalFrame() (string, int) {
 	return "", 0
 }
 
+// callerLocation returns the file and line number of the caller at the specified skip level.
 func callerLocation(skip int) (string, int) {
 	_, file, line, ok := runtime.Caller(skip)
 	if !ok {
@@ -157,15 +158,19 @@ func callerLocation(skip int) (string, int) {
 	return file, line
 }
 
+// writeDump writes the values to the tabwriter, handling references and indentation.
 func writeDump(tw *tabwriter.Writer, vs ...any) {
 	referenceMap = map[uintptr]int{} // reset each time
 	visited := map[uintptr]bool{}
 	for _, v := range vs {
-		printValue(tw, reflect.ValueOf(v), 0, visited)
+		rv := reflect.ValueOf(v)
+		rv = makeAddressable(rv)
+		printValue(tw, rv, 0, visited)
 		fmt.Fprintln(tw)
 	}
 }
 
+// printValue recursively prints the value with indentation and handles references.
 func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[uintptr]bool) {
 	if indent > maxDepth {
 		fmt.Fprint(tw, colorize(colorGray, "... (max depth)"))
@@ -176,35 +181,9 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		return
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Fprintf(tw, colorize(colorGray, "<godump handled panic: %v>"), r)
-		}
-	}()
-
-	// If value implements fmt.Stringer, use it
-	if v.CanInterface() {
-		val := v.Interface()
-		if s, ok := val.(fmt.Stringer); ok {
-			// Protect against nil underlying pointers that still implement fmt.Stringer
-			rv := reflect.ValueOf(s)
-			if rv.Kind() == reflect.Ptr && rv.IsNil() {
-				// Print type with nil
-				fmt.Fprint(tw, colorize(colorGray, v.Type().String()+"(nil)"))
-				return
-			}
-			fmt.Fprint(tw, colorize(colorLime, s.String())+colorize(colorGray, " #"+v.Type().String()))
-			return
-		}
-	}
-
-	// Custom handling for time.Time
-	if v.Type().PkgPath() == "time" && v.Type().Name() == "Time" {
-		if t, ok := v.Interface().(interface{ String() string }); ok {
-			str := t.String()
-			fmt.Fprint(tw, colorize(colorLime, str)+colorize(colorGray, " #time.Time"))
-			return
-		}
+	if s := asStringer(v); s != "" {
+		fmt.Fprint(tw, s)
+		return
 	}
 
 	if isNil(v) {
@@ -212,6 +191,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		fmt.Fprintf(tw, colorize(colorLime, typeStr)+colorize(colorGray, "(nil)"))
 		return
 	}
+
 	if v.Kind() == reflect.Ptr && v.CanAddr() {
 		ptr := v.Pointer()
 		if id, ok := referenceMap[ptr]; ok {
@@ -222,6 +202,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 			nextRefID++
 		}
 	}
+
 	switch v.Kind() {
 	case reflect.Ptr, reflect.Interface:
 		printValue(tw, v.Elem(), indent, visited)
@@ -233,20 +214,23 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		}
 	case reflect.Struct:
 		t := v.Type()
-
 		fmt.Fprintf(tw, "%s ", colorize(colorGray, "#"+t.String()))
 		fmt.Fprintln(tw)
-		for i := range v.NumField() {
+		for i, _ := range reflect.VisibleFields(t) {
 			field := t.Field(i)
 			fieldVal := v.Field(i)
 			symbol := "+"
-			if field.PkgPath != "" {
+			if field.PkgPath != "" { // private
 				symbol = "-"
 				fieldVal = forceExported(fieldVal)
 			}
 			indentPrint(tw, indent+1, colorize(colorYellow, symbol)+field.Name)
 			fmt.Fprint(tw, "	=> ")
-			printValue(tw, fieldVal, indent+1, visited)
+			if s := asStringer(fieldVal); s != "" {
+				fmt.Fprint(tw, s)
+			} else {
+				printValue(tw, fieldVal, indent+1, visited)
+			}
 			fmt.Fprintln(tw)
 		}
 		indentPrint(tw, indent, "")
@@ -277,7 +261,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 				indentPrint(tw, indent+1, colorize(colorGray, "... (truncated)\n"))
 				break
 			}
-			indentPrint(tw, indent+1, fmt.Sprintf("%s => ", colorize(colorCyan, fmt.Sprintf("%1d", i))))
+			indentPrint(tw, indent+1, fmt.Sprintf("%s => ", colorize(colorCyan, fmt.Sprintf("%d", i))))
 			printValue(tw, v.Index(i), indent+1, visited)
 			fmt.Fprintln(tw)
 		}
@@ -313,17 +297,59 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 	}
 }
 
+// asStringer checks if the value implements fmt.Stringer and returns its string representation.
+func asStringer(v reflect.Value) string {
+	val := v
+	if !val.CanInterface() {
+		val = forceExported(val)
+	}
+	if val.CanInterface() {
+		if s, ok := val.Interface().(fmt.Stringer); ok {
+			rv := reflect.ValueOf(s)
+			if rv.Kind() == reflect.Ptr && rv.IsNil() {
+				return colorize(colorGray, val.Type().String()+"(nil)")
+			}
+			return colorize(colorLime, s.String()) + colorize(colorGray, " #"+val.Type().String())
+		}
+	}
+	return ""
+}
+
+// indentPrint prints indented text to the tabwriter.
 func indentPrint(tw *tabwriter.Writer, indent int, text string) {
 	fmt.Fprint(tw, strings.Repeat(" ", indent*indentWidth)+text)
 }
 
+// forceExported returns a value that is guaranteed to be exported, even if it is unexported.
 func forceExported(v reflect.Value) reflect.Value {
-	if v.CanInterface() || !v.CanAddr() {
+	if v.CanInterface() {
 		return v
 	}
-	return reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
+	if v.CanAddr() {
+		return reflect.NewAt(v.Type(), unsafe.Pointer(v.UnsafeAddr())).Elem()
+	}
+	// Final fallback: return original value, even if unexported
+	return v
 }
 
+// makeAddressable ensures the value is addressable, wrapping structs in pointers if necessary.
+func makeAddressable(v reflect.Value) reflect.Value {
+	// Already addressable? Do nothing
+	if v.CanAddr() {
+		return v
+	}
+
+	// If it's a struct and not addressable, wrap it in a pointer
+	if v.Kind() == reflect.Struct {
+		ptr := reflect.New(v.Type())
+		ptr.Elem().Set(v)
+		return ptr.Elem()
+	}
+
+	return v
+}
+
+// isNil checks if the value is nil based on its kind.
 func isNil(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface, reflect.Func, reflect.Chan:
@@ -333,6 +359,7 @@ func isNil(v reflect.Value) bool {
 	}
 }
 
+// escapeControl escapes control characters in a string for safe display.
 func escapeControl(s string) string {
 	replacer := strings.NewReplacer(
 		"\n", `\n`,
@@ -345,6 +372,7 @@ func escapeControl(s string) string {
 	return replacer.Replace(s)
 }
 
+// detectColor checks environment variables to determine if color output should be enabled.
 func detectColor() bool {
 	if os.Getenv("NO_COLOR") != "" {
 		return false
