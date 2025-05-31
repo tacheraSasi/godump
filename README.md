@@ -24,8 +24,13 @@
 <br>
 
 <p align="center">
-<strong>Terminal Output Example</strong><br>
+<strong>Terminal Output Example (Simple)</strong><br>
   <img src="./assets/demo-terminal.png">
+</p>
+
+<p align="center">
+<strong>Terminal Output Example (Kitchen Sink)</strong><br>
+  <img src="./assets/demo-terminal-2.png">
 </p>
 
 <p align="center">
