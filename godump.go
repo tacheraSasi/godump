@@ -175,14 +175,26 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		fmt.Fprint(tw, colorize(colorGray, "<invalid>"))
 		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(tw, colorize(colorGray, "<godump handled panic: %v>"), r)
+		}
+	}()
+
 	// If value implements fmt.Stringer, use it
 	if v.CanInterface() {
-		// Skip using String() for reflect.Value so we can dump internals
-		if _, skip := v.Interface().(reflect.Value); !skip {
-			if s, ok := v.Interface().(fmt.Stringer); ok {
-				fmt.Fprint(tw, colorize(colorLime, s.String())+colorize(colorGray, " #"+v.Type().String()))
+		val := v.Interface()
+		if s, ok := val.(fmt.Stringer); ok {
+			// Protect against nil underlying pointers that still implement fmt.Stringer
+			rv := reflect.ValueOf(s)
+			if rv.Kind() == reflect.Ptr && rv.IsNil() {
+				// Print type with nil
+				fmt.Fprint(tw, colorize(colorGray, v.Type().String()+"(nil)"))
 				return
 			}
+			fmt.Fprint(tw, colorize(colorLime, s.String())+colorize(colorGray, " #"+v.Type().String()))
+			return
 		}
 	}
 

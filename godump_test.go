@@ -1,6 +1,7 @@
 package godump
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"regexp"
@@ -348,9 +349,7 @@ func TestNilInterfaceTypePrint(t *testing.T) {
 func TestUnreadableDefaultBranch(t *testing.T) {
 	v := reflect.Value{}
 	out := stripANSI(DumpStr(v))
-
-	// Match stable part of reflect.Value zero output
-	assert.Contains(t, out, "typ_ => *abi.Type(nil)")
+	assert.Contains(t, out, "#reflect.Value") // new expected fallback
 }
 
 func TestNoColorEnvironment(t *testing.T) {
@@ -415,4 +414,19 @@ func TestDefaultBranchFallback(t *testing.T) {
 	if !strings.Contains(sb.String(), "<invalid>") {
 		t.Error("Expected default fallback for invalid reflect.Value")
 	}
+}
+
+type BadStringer struct{}
+
+func (b *BadStringer) String() string {
+	return "should never be called on nil"
+}
+
+func TestSafeStringerCall(t *testing.T) {
+	var s fmt.Stringer = (*BadStringer)(nil) // nil pointer implementing Stringer
+
+	out := stripANSI(DumpStr(s))
+
+	assert.Contains(t, out, "(nil)")
+	assert.NotContains(t, out, "should never be called") // ensure String() wasn't called
 }
