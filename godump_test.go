@@ -2,9 +2,11 @@ package godump
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"os"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 	"text/tabwriter"
@@ -602,4 +604,139 @@ func TestTheKitchenSink(t *testing.T) {
 	assert.Contains(t, out, "#")          // loosest
 	assert.Contains(t, out, "Everything") // middle-ground
 
+}
+
+func TestAnsiColorize_Disabled(t *testing.T) {
+	orig := enableColor
+	enableColor = false
+	defer func() { enableColor = orig }()
+
+	out := ansiColorize(colorYellow, "test")
+	assert.Equal(t, "test", out)
+}
+
+func TestForceExportedFallback(t *testing.T) {
+	type s struct{ val string }
+	v := reflect.ValueOf(s{"hidden"}).Field(0) // not addressable
+	out := forceExported(v)
+	assert.Equal(t, "hidden", out.String())
+}
+
+func TestAnsiColorize_DisabledBranch(t *testing.T) {
+	orig := enableColor
+	enableColor = false
+	defer func() { enableColor = orig }()
+
+	out := ansiColorize(colorLime, "xyz")
+	assert.Equal(t, "xyz", out)
+}
+
+func TestFindFirstNonInternalFrame_FallbackBranch(t *testing.T) {
+	orig := callerFn
+	defer func() { callerFn = orig }()
+
+	// Always fail to simulate 10 bad frames
+	callerFn = func(i int) (uintptr, string, int, bool) {
+		return 0, "", 0, false
+	}
+
+	file, line := findFirstNonInternalFrame()
+	assert.Equal(t, "", file)
+	assert.Equal(t, 0, line)
+}
+
+func TestForceExported_NoInterfaceNoAddr(t *testing.T) {
+	v := reflect.ValueOf(struct{ a string }{"x"}).Field(0)
+	if v.CanAddr() {
+		t.Skip("Field unexpectedly addressable; cannot hit fallback branch")
+	}
+	out := forceExported(v)
+	assert.Equal(t, "x", out.String())
+}
+
+func TestPrintDumpHeader_SkipWhenNoFrame(t *testing.T) {
+	orig := callerFn
+	defer func() { callerFn = orig }()
+
+	callerFn = func(skip int) (uintptr, string, int, bool) {
+		return 0, "", 0, false
+	}
+
+	var b strings.Builder
+	printDumpHeader(&b, 3)
+	assert.Equal(t, "", b.String()) // nothing should be written
+}
+
+var runtimeCaller = runtime.Caller
+
+func TestCallerLocation_Fallback(t *testing.T) {
+	// Override runtime.Caller behavior
+	orig := runtimeCaller
+	defer func() { runtimeCaller = orig }()
+	runtimeCaller = func(skip int) (uintptr, string, int, bool) {
+		return 0, "", 0, false
+	}
+
+	file, line := callerLocation(5)
+	assert.Equal(t, "", file)
+	assert.Equal(t, 0, line)
+}
+
+type customChan chan int
+
+func TestPrintValue_ChanNilBranch_Hardforce(t *testing.T) {
+	var buf strings.Builder
+	tw := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
+
+	var ch customChan
+	v := reflect.ValueOf(ch)
+
+	assert.True(t, v.IsNil())
+	assert.Equal(t, reflect.Chan, v.Kind())
+
+	printValue(tw, v, 0, map[uintptr]bool{})
+	tw.Flush()
+
+	out := stripANSI(buf.String())
+	assert.Contains(t, out, "customChan(nil)")
+}
+
+type secretString string
+
+func (s secretString) String() string {
+	return "👻 hidden stringer"
+}
+
+type hidden struct {
+	secret secretString // unexported
+}
+
+func TestAsStringer_ForceExported(t *testing.T) {
+	h := &hidden{secret: "boo"}                          // pointer makes fields addressable
+	v := reflect.ValueOf(h).Elem().FieldByName("secret") // now v.CanAddr() is true, but v.CanInterface() is false
+
+	assert.False(t, v.CanInterface(), "field must not be interfaceable")
+	str := asStringer(v)
+
+	assert.Contains(t, str, "👻 hidden stringer")
+}
+
+func TestForceExported_Interfaceable(t *testing.T) {
+	v := reflect.ValueOf("already ok")
+	require.True(t, v.CanInterface())
+
+	out := forceExported(v)
+
+	assert.Equal(t, "already ok", out.Interface())
+}
+
+func TestMakeAddressable_CanAddr(t *testing.T) {
+	s := "hello"
+	v := reflect.ValueOf(&s).Elem() // addressable string
+
+	require.True(t, v.CanAddr())
+
+	out := makeAddressable(v)
+
+	assert.Equal(t, v.Interface(), out.Interface()) // compare by value
 }

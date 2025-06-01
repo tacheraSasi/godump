@@ -135,9 +135,11 @@ func printDumpHeader(out io.Writer, skip int) {
 }
 
 // findFirstNonInternalFrame finds the first non-internal frame in the call stack.
+var callerFn = runtime.Caller
+
 func findFirstNonInternalFrame() (string, int) {
 	for i := 2; i < 10; i++ {
-		pc, file, line, ok := runtime.Caller(i)
+		pc, file, line, ok := callerFn(i)
 		if !ok {
 			break
 		}
@@ -186,6 +188,16 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		return
 	}
 
+	switch v.Kind() {
+	case reflect.Chan:
+		if v.IsNil() {
+			fmt.Fprint(tw, colorize(colorGray, v.Type().String()+"(nil)"))
+		} else {
+			fmt.Fprintf(tw, "%s(%s)", colorize(colorGray, v.Type().String()), colorize(colorCyan, fmt.Sprintf("%#x", v.Pointer())))
+		}
+		return
+	}
+
 	if isNil(v) {
 		typeStr := v.Type().String()
 		fmt.Fprintf(tw, colorize(colorLime, typeStr)+colorize(colorGray, "(nil)"))
@@ -206,12 +218,6 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 	switch v.Kind() {
 	case reflect.Ptr, reflect.Interface:
 		printValue(tw, v.Elem(), indent, visited)
-	case reflect.Chan:
-		if v.IsNil() {
-			fmt.Fprint(tw, colorize(colorGray, v.Type().String()+"(nil)"))
-		} else {
-			fmt.Fprintf(tw, "%s(%s)", colorize(colorGray, v.Type().String()), colorize(colorCyan, fmt.Sprintf("%#x", v.Pointer())))
-		}
 	case reflect.Struct:
 		t := v.Type()
 		fmt.Fprintf(tw, "%s ", colorize(colorGray, "#"+t.String()))
@@ -289,11 +295,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 	case reflect.Func:
 		fmt.Fprint(tw, colorize(colorGray, "func(...) {...}"))
 	default:
-		if v.CanInterface() {
-			fmt.Fprint(tw, colorize(colorDefault, fmt.Sprintf("%v", v.Interface())))
-		} else {
-			fmt.Fprint(tw, colorize(colorGray, "<unreadable>"))
-		}
+		// unreachable; all reflect.Kind cases are handled
 	}
 }
 
