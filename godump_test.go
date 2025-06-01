@@ -571,4 +571,35 @@ func TestTheKitchenSink(t *testing.T) {
 	val.Recursive.Self = val.Recursive // cycle
 
 	Dump(val)
+
+	out := stripANSI(DumpStr(val))
+
+	// Minimal coverage assertions
+	assert.Contains(t, out, "+String")
+	assert.Contains(t, out, `"test"`)
+	assert.Contains(t, out, "+Bool")
+	assert.Contains(t, out, "true")
+	assert.Contains(t, out, "+Int")
+	assert.Contains(t, out, "42")
+	assert.Contains(t, out, "+Float")
+	assert.Contains(t, out, "3.1415")
+	assert.Contains(t, out, "+PtrString")
+	assert.Contains(t, out, `"Hello"`)
+	assert.Contains(t, out, "+SliceInts")
+	assert.Contains(t, out, "0 => 1")
+	assert.Contains(t, out, "+ArrayStrings")
+	assert.Contains(t, out, `"foo"`)
+	assert.Contains(t, out, "+MapValues")
+	assert.Contains(t, out, "a => 1")
+	assert.Contains(t, out, "+Nested")
+	assert.Contains(t, out, "+ID") // from nested
+	assert.Contains(t, out, "+Notes")
+	assert.Contains(t, out, "-privateField")
+	assert.Contains(t, out, `"should show"`)
+	assert.Contains(t, out, "↩︎") // recursion reference
+
+	// Ensure no panic occurred and a sane dump was produced
+	assert.Contains(t, out, "#")          // loosest
+	assert.Contains(t, out, "Everything") // middle-ground
+
 }
