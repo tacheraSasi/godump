@@ -59,6 +59,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"github.com/goforj/godump"
 )
 
@@ -94,6 +95,9 @@ func main() {
 	// HTML for web UI output
 	html := godump.DumpHTML(user)
 	fmt.Println("html", html)
+	
+	// Write to any io.Writer (e.g. file, buffer, logger)
+	godump.Fdump(os.Stderr, user)
 }
 ```
 
