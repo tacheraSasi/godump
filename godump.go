@@ -75,6 +75,14 @@ func Dump(vs ...any) {
 	tw.Flush()
 }
 
+// Fdump writes the formatted dump of values to the given io.Writer.
+func Fdump(w io.Writer, vs ...any) {
+	printDumpHeader(w, 3)
+	tw := tabwriter.NewWriter(w, 0, 0, 1, ' ', 0)
+	writeDump(tw, vs...)
+	tw.Flush()
+}
+
 // DumpStr dumps the values as a string with colorized output.
 func DumpStr(vs ...any) string {
 	var sb strings.Builder
