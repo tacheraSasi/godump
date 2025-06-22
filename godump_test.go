@@ -3,7 +3,6 @@ package godump
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"reflect"
 	"regexp"
@@ -13,6 +12,8 @@ import (
 	"text/tabwriter"
 	"time"
 	"unsafe"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -959,4 +960,37 @@ func TestIndirectionNilPointer(t *testing.T) {
 	assert.Contains(t, out, "+Name")
 	assert.Contains(t, out, "John")
 	assert.Contains(t, out, "+Embedded => *godump.Embedded(nil)")
+}
+
+func TestDumpJSON(t *testing.T) {
+	t.Run("single struct", func(t *testing.T) {
+		type User struct {
+			Name string `json:"name"`
+			Age  int    `json:"age"`
+		}
+		user := User{Name: "Alice", Age: 30}
+		jsonStr := DumpJSON(user)
+
+		expected := `{
+  "name": "Alice",
+  "age": 30
+}`
+		assert.JSONEq(t, expected, jsonStr)
+	})
+
+	t.Run("multiple values", func(t *testing.T) {
+		jsonStr := DumpJSON("hello", 42, true)
+		expected := `[
+  "hello",
+  42,
+  true
+]`
+		assert.JSONEq(t, expected, jsonStr)
+	})
+
+	t.Run("unmarshallable type", func(t *testing.T) {
+		ch := make(chan int)
+		jsonStr := DumpJSON(ch)
+		assert.Contains(t, jsonStr, `"error": "json: unsupported type: chan int"`)
+	})
 }
