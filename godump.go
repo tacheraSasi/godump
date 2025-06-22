@@ -1,6 +1,7 @@
 package godump
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -116,6 +117,24 @@ func DumpHTML(vs ...any) string {
 
 	sb.WriteString("</pre>")
 	return sb.String()
+}
+
+// DumpJSON dumps the values as a pretty-printed JSON string.
+// If there is more than one value, they are dumped as a JSON array.
+// It returns an error string if marshalling fails.
+func DumpJSON(vs ...any) string {
+	var data any
+	if len(vs) == 1 {
+		data = vs[0]
+	} else {
+		data = vs
+	}
+
+	b, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+	}
+	return string(b)
 }
 
 // Dd is a debug function that prints the values and exits the program.
