@@ -211,11 +211,13 @@ func (d *Dumper) DumpHTML(vs ...any) string {
 // If there is more than one value, they are dumped as a JSON array.
 // It returns an error string if marshalling fails.
 func DumpJSON(vs ...any) string {
-	var data any
+	if len(vs) == 0 {
+		return `{"error": "DumpJSON called with no arguments"}`
+	}
+
+	var data any = vs
 	if len(vs) == 1 {
 		data = vs[0]
-	} else {
-		data = vs
 	}
 
 	b, err := json.MarshalIndent(data, "", "  ")

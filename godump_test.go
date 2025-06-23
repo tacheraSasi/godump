@@ -963,6 +963,12 @@ func TestIndirectionNilPointer(t *testing.T) {
 }
 
 func TestDumpJSON(t *testing.T) {
+	t.Run("no arguments", func(t *testing.T) {
+		jsonStr := DumpJSON()
+		expected := `{"error": "DumpJSON called with no arguments"}`
+		assert.JSONEq(t, expected, jsonStr)
+	})
+
 	t.Run("single struct", func(t *testing.T) {
 		type User struct {
 			Name string `json:"name"`
