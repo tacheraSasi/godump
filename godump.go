@@ -220,7 +220,7 @@ func DumpJSON(vs ...any) string {
 		data = vs[0]
 	}
 
-	b, err := json.MarshalIndent(data, "", "  ")
+	b, err := json.MarshalIndent(data, "", strings.Repeat(" ", indentWidth))
 	if err != nil {
 		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
 	}
