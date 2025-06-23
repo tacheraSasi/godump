@@ -997,6 +997,22 @@ func TestDumpJSON(t *testing.T) {
 	t.Run("unmarshallable type", func(t *testing.T) {
 		ch := make(chan int)
 		jsonStr := DumpJSON(ch)
-		assert.Contains(t, jsonStr, `"error": "json: unsupported type: chan int"`)
+		expected := `{"error": "json: unsupported type: chan int"}`
+		assert.JSONEq(t, expected, jsonStr)
+	})
+
+	t.Run("nil value", func(t *testing.T) {
+		jsonStr := DumpJSON(nil)
+		assert.JSONEq(t, "null", jsonStr)
+	})
+
+	t.Run("multiple integers", func(t *testing.T) {
+		jsonStr := DumpJSON(1, 2)
+		assert.JSONEq(t, "[1, 2]", jsonStr)
+	})
+
+	t.Run("slice of integers", func(t *testing.T) {
+		jsonStr := DumpJSON([]int{1, 2})
+		assert.JSONEq(t, "[1, 2]", jsonStr)
 	})
 }
