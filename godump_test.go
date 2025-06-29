@@ -846,3 +846,32 @@ New lines are also important to check.`
 
 	Dump(paragraphBytes)
 }
+
+func TestIndirectionNilPointer(t *testing.T) {
+	type Embedded struct {
+		Surname string
+	}
+
+	type Test struct {
+		Name string
+		*Embedded
+	}
+
+	ts := &Test{
+		Name:     "John",
+		Embedded: nil,
+	}
+
+	Dump(ts)
+
+	// assert that we don't panic or crash when dereferencing nil pointers
+	if ts.Embedded != nil {
+		t.Errorf("Expected Embedded to be nil, got: %+v", ts.Embedded)
+	}
+
+	// Check that the output does not contain dereferenced nil pointer
+	out := stripANSI(DumpStr(ts))
+	assert.Contains(t, out, "+Name")
+	assert.Contains(t, out, "John")
+	assert.Contains(t, out, "+Embedded => *godump.Embedded(nil)")
+}
