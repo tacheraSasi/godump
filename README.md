@@ -101,7 +101,8 @@ func main() {
 	godump.Fdump(os.Stderr, user)
 
 	// Dump and exit
-	godump.Dd(user) // this will print the dump and exit the program }
+	godump.Dd(user) // this will print the dump and exit the program 
+}
 ```
 
 ## 🧪 Example Output
