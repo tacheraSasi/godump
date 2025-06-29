@@ -26,12 +26,20 @@ const (
 	indentWidth  = 2
 )
 
+// Default configuration values for the Dumper.
+const (
+	defaultMaxDepth     = 15
+	defaultMaxItems     = 100
+	defaultMaxStringLen = 100000
+)
+
+// defaultDumper is the default Dumper instance used by Dump and DumpStr functions.
+var defaultDumper = NewDumper()
+
+// exitFunc is a function that can be overridden for testing purposes.
 var exitFunc = os.Exit
 
 var (
-	maxDepth     = 15
-	maxItems     = 100
-	maxStringLen = 100000
 	enableColor  = detectColor()
 	nextRefID    = 1
 	referenceMap = map[uintptr]int{}
@@ -67,35 +75,115 @@ func htmlColorize(code, str string) string {
 	return fmt.Sprintf(`<span style="color:%s">%s</span>`, htmlColorMap[code], str)
 }
 
+// Dumper holds configuration for dumping structured data.
+// It controls depth, item count, and string length limits.
+type Dumper struct {
+	maxDepth     int
+	maxItems     int
+	maxStringLen int
+	writer       io.Writer
+}
+
+// Option defines a functional option for configuring a Dumper.
+type Option func(*Dumper) *Dumper
+
+// WithMaxDepth allows to control how deep the structure will be dumped.
+// Param n must be 0 or greater or this will be ignored, and default MaxDepth will be 15
+func WithMaxDepth(n int) Option {
+	return func(d *Dumper) *Dumper {
+		if n >= 0 {
+			d.maxDepth = n
+		}
+		return d
+	}
+}
+
+// WithMaxItems allows to control how many items from an array, slice or maps can be printed.
+// Param n must be 0 or greater or this will be ignored, and default MaxItems will be 100
+func WithMaxItems(n int) Option {
+	return func(d *Dumper) *Dumper {
+		if n >= 0 {
+			d.maxItems = n
+		}
+		return d
+	}
+}
+
+// WithMaxStringLen allows to control how long can printed strings be.
+// Param n must be 0 or greater or this will be ignored, and default MaxStringLen will be 100000
+func WithMaxStringLen(n int) Option {
+	return func(d *Dumper) *Dumper {
+		if n >= 0 {
+			d.maxStringLen = n
+		}
+		return d
+	}
+}
+
+// WithWriter allows to control the io output.
+func WithWriter(w io.Writer) Option {
+	return func(d *Dumper) *Dumper {
+		d.writer = w
+		return d
+	}
+}
+
+// NewDumper creates a new Dumper with the given options applied.
+// Defaults are used for any setting not overridden.
+func NewDumper(opts ...Option) *Dumper {
+	d := &Dumper{
+		maxDepth:     defaultMaxDepth,
+		maxItems:     defaultMaxItems,
+		maxStringLen: defaultMaxStringLen,
+		writer:       os.Stdout,
+	}
+	for _, opt := range opts {
+		d = opt(d)
+	}
+	return d
+}
+
 // Dump prints the values to stdout with colorized output.
 func Dump(vs ...any) {
-	printDumpHeader(os.Stdout, 3)
-	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	writeDump(tw, vs...)
+	defaultDumper.Dump(vs...)
+}
+
+// Dump prints the values to stdout with colorized output.
+func (d *Dumper) Dump(vs ...any) {
+	printDumpHeader(d.writer, 3)
+	tw := tabwriter.NewWriter(d.writer, 0, 0, 1, ' ', 0)
+	d.writeDump(tw, vs...)
 	tw.Flush()
 }
 
 // Fdump writes the formatted dump of values to the given io.Writer.
 func Fdump(w io.Writer, vs ...any) {
-	printDumpHeader(w, 3)
-	tw := tabwriter.NewWriter(w, 0, 0, 1, ' ', 0)
-	writeDump(tw, vs...)
-	tw.Flush()
+	NewDumper(WithWriter(w)).Dump(vs...)
 }
 
-// DumpStr dumps the values as a string with colorized output.
+// DumpStr returns a string representation of the values with colorized output.
 func DumpStr(vs ...any) string {
+	return defaultDumper.DumpStr(vs...)
+}
+
+// DumpStr returns a string representation of the values with colorized output.
+func (d *Dumper) DumpStr(vs ...any) string {
 	var sb strings.Builder
 	printDumpHeader(&sb, 3)
 	tw := tabwriter.NewWriter(&sb, 0, 0, 1, ' ', 0)
-	writeDump(tw, vs...)
+	d.writeDump(tw, vs...)
 	tw.Flush()
 	return sb.String()
 }
 
 // DumpHTML dumps the values as HTML with colorized output.
 func DumpHTML(vs ...any) string {
-	prevColorize := ansiColorize
+	return defaultDumper.DumpHTML(vs...)
+}
+
+// DumpHTML dumps the values as HTML with colorized output.
+func (d *Dumper) DumpHTML(vs ...any) string {
+	prevColorize := colorize
 	prevEnable := enableColor
 	defer func() {
 		colorize = prevColorize
@@ -111,7 +199,7 @@ func DumpHTML(vs ...any) string {
 
 	tw := tabwriter.NewWriter(&sb, 0, 0, 1, ' ', 0)
 	printDumpHeader(&sb, 3)
-	writeDump(tw, vs...)
+	d.writeDump(tw, vs...)
 	tw.Flush()
 
 	sb.WriteString("</pre></body>")
@@ -120,7 +208,12 @@ func DumpHTML(vs ...any) string {
 
 // Dd is a debug function that prints the values and exits the program.
 func Dd(vs ...any) {
-	Dump(vs...)
+	defaultDumper.Dd(vs...)
+}
+
+// Dd is a debug function that prints the values and exits the program.
+func (d *Dumper) Dd(vs ...any) {
+	d.Dump(vs...)
 	exitFunc(1)
 }
 
@@ -237,21 +330,19 @@ func callerLocation(skip int) (string, int) {
 	return file, line
 }
 
-// writeDump writes the values to the tabwriter, handling references and indentation.
-func writeDump(tw *tabwriter.Writer, vs ...any) {
+func (d *Dumper) writeDump(tw *tabwriter.Writer, vs ...any) {
 	referenceMap = map[uintptr]int{} // reset each time
 	visited := map[uintptr]bool{}
 	for _, v := range vs {
 		rv := reflect.ValueOf(v)
 		rv = makeAddressable(rv)
-		printValue(tw, rv, 0, visited)
+		d.printValue(tw, rv, 0, visited)
 		fmt.Fprintln(tw)
 	}
 }
 
-// printValue recursively prints the value with indentation and handles references.
-func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[uintptr]bool) {
-	if indent > maxDepth {
+func (d *Dumper) printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[uintptr]bool) {
+	if indent > d.maxDepth {
 		fmt.Fprint(tw, colorize(colorGray, "... (max depth)"))
 		return
 	}
@@ -294,7 +385,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 
 	switch v.Kind() {
 	case reflect.Ptr, reflect.Interface:
-		printValue(tw, v.Elem(), indent, visited)
+		d.printValue(tw, v.Elem(), indent, visited)
 	case reflect.Struct:
 		t := v.Type()
 		fmt.Fprintf(tw, "%s ", colorize(colorGray, "#"+t.String()))
@@ -314,7 +405,7 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 			if s := asStringer(fieldVal); s != "" {
 				fmt.Fprint(tw, s)
 			} else {
-				printValue(tw, fieldVal, indent+1, visited)
+				d.printValue(tw, fieldVal, indent+1, visited)
 			}
 			fmt.Fprintln(tw)
 		}
@@ -328,13 +419,13 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		fmt.Fprintln(tw, "{")
 		keys := v.MapKeys()
 		for i, key := range keys {
-			if i >= maxItems {
+			if i >= d.maxItems {
 				indentPrint(tw, indent+1, colorize(colorGray, "... (truncated)"))
 				break
 			}
 			keyStr := fmt.Sprintf("%v", key.Interface())
 			indentPrint(tw, indent+1, fmt.Sprintf(" %s => ", colorize(colorMeta, keyStr)))
-			printValue(tw, v.MapIndex(key), indent+1, visited)
+			d.printValue(tw, v.MapIndex(key), indent+1, visited)
 			fmt.Fprintln(tw)
 		}
 		indentPrint(tw, indent, "")
@@ -354,22 +445,21 @@ func printValue(tw *tabwriter.Writer, v reflect.Value, indent int, visited map[u
 		// Default rendering for other slices/arrays
 		fmt.Fprintln(tw, "[")
 		for i := range v.Len() {
-			if i >= maxItems {
+			if i >= d.maxItems {
 				indentPrint(tw, indent+1, colorize(colorGray, "... (truncated)\n"))
 				break
 			}
 			indentPrint(tw, indent+1, fmt.Sprintf("%s => ", colorize(colorCyan, fmt.Sprintf("%d", i))))
-			printValue(tw, v.Index(i), indent+1, visited)
+			d.printValue(tw, v.Index(i), indent+1, visited)
 			fmt.Fprintln(tw)
 		}
 		indentPrint(tw, indent, "")
 		fmt.Fprint(tw, "]")
-
 	case reflect.String:
 		str := escapeControl(v.String())
-		if utf8.RuneCountInString(str) > maxStringLen {
+		if utf8.RuneCountInString(str) > d.maxStringLen {
 			runes := []rune(str)
-			str = string(runes[:maxStringLen]) + "…"
+			str = string(runes[:d.maxStringLen]) + "…"
 		}
 		fmt.Fprint(tw, colorize(colorYellow, `"`)+colorize(colorLime, str)+colorize(colorYellow, `"`))
 	case reflect.Bool:
@@ -453,6 +543,7 @@ func isNil(v reflect.Value) bool {
 	}
 }
 
+// replacer is used to escape control characters in strings.
 var replacer = strings.NewReplacer(
 	"\n", `\n`,
 	"\t", `\t`,
