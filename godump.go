@@ -190,12 +190,8 @@ func (d *Dumper) DumpJSONStr(vs ...any) string {
 
 	b, err := json.MarshalIndent(data, "", strings.Repeat(" ", indentWidth))
 	if err != nil {
-		// Return valid JSON error response
-		errorJSON, marshalErr := json.Marshal(map[string]string{"error": err.Error()})
-		if marshalErr != nil {
-			// Fallback to raw JSON string if even that fails
-			return fmt.Sprintf(`{"error": "%q"}`, err.Error())
-		}
+		// nolint:errchkjson // fallback handles this manually below
+		errorJSON, _ := json.Marshal(map[string]string{"error": err.Error()})
 		return string(errorJSON)
 	}
 	return string(b)

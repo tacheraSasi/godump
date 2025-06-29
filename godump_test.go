@@ -1037,4 +1037,50 @@ func TestDumpJSON(t *testing.T) {
 		assert.JSONEq(t, `"hello"`, strings.TrimSpace(string(output)))
 	})
 
+	t.Run("DumpJSON prints valid JSON to stdout for multiple values (Dumper)", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		// Use WithWriter to inject the custom output
+		d := NewDumper(WithWriter(&buf))
+		d.DumpJSON("foo", 123, true)
+
+		var got []any
+		err := json.Unmarshal(buf.Bytes(), &got)
+		require.NoError(t, err)
+		assert.Equal(t, []any{"foo", float64(123), true}, got)
+	})
+
+	t.Run("DumpJSON prints valid JSON to stdout for multiple values", func(t *testing.T) {
+		// Save and override defaultDumper temporarily
+		orig := defaultDumper
+
+		r, w, _ := os.Pipe()
+		defaultDumper = NewDumper(WithWriter(w))
+
+		// Read from pipe in goroutine
+		done := make(chan string)
+		go func() {
+			var buf bytes.Buffer
+			_, _ = io.Copy(&buf, r)
+			done <- buf.String()
+		}()
+
+		// Perform the dump
+		DumpJSON("foo", 123, true)
+
+		_ = w.Close()
+		defaultDumper = orig // restore original dumper
+
+		output := <-done
+		output = strings.TrimSpace(output)
+
+		t.Logf("Captured: %q", output)
+
+		var got []any
+		err := json.Unmarshal([]byte(output), &got)
+		require.NoError(t, err, "json.Unmarshal failed with output: %q", output)
+
+		assert.Equal(t, []any{"foo", float64(123), true}, got)
+	})
+
 }
