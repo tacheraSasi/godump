@@ -964,7 +964,7 @@ func TestIndirectionNilPointer(t *testing.T) {
 
 func TestDumpJSON(t *testing.T) {
 	t.Run("no arguments", func(t *testing.T) {
-		jsonStr := DumpJSON()
+		jsonStr := DumpJSONStr()
 		expected := `{"error": "DumpJSON called with no arguments"}`
 		assert.JSONEq(t, expected, jsonStr)
 	})
@@ -975,7 +975,7 @@ func TestDumpJSON(t *testing.T) {
 			Age  int    `json:"age"`
 		}
 		user := User{Name: "Alice", Age: 30}
-		jsonStr := DumpJSON(user)
+		jsonStr := DumpJSONStr(user)
 
 		expected := `{
   "name": "Alice",
@@ -985,7 +985,7 @@ func TestDumpJSON(t *testing.T) {
 	})
 
 	t.Run("multiple values", func(t *testing.T) {
-		jsonStr := DumpJSON("hello", 42, true)
+		jsonStr := DumpJSONStr("hello", 42, true)
 		expected := `[
   "hello",
   42,
@@ -996,23 +996,23 @@ func TestDumpJSON(t *testing.T) {
 
 	t.Run("unmarshallable type", func(t *testing.T) {
 		ch := make(chan int)
-		jsonStr := DumpJSON(ch)
+		jsonStr := DumpJSONStr(ch)
 		expected := `{"error": "json: unsupported type: chan int"}`
 		assert.JSONEq(t, expected, jsonStr)
 	})
 
 	t.Run("nil value", func(t *testing.T) {
-		jsonStr := DumpJSON(nil)
+		jsonStr := DumpJSONStr(nil)
 		assert.JSONEq(t, "null", jsonStr)
 	})
 
 	t.Run("multiple integers", func(t *testing.T) {
-		jsonStr := DumpJSON(1, 2)
+		jsonStr := DumpJSONStr(1, 2)
 		assert.JSONEq(t, "[1, 2]", jsonStr)
 	})
 
 	t.Run("slice of integers", func(t *testing.T) {
-		jsonStr := DumpJSON([]int{1, 2})
+		jsonStr := DumpJSONStr([]int{1, 2})
 		assert.JSONEq(t, "[1, 2]", jsonStr)
 	})
 }
