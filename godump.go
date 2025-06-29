@@ -209,7 +209,7 @@ func (d *Dumper) DumpHTML(vs ...any) string {
 
 // DumpJSON dumps the values as a pretty-printed JSON string.
 // If there is more than one value, they are dumped as a JSON array.
-// It returns an error string if marshalling fails.
+// It returns an error string if marshaling fails.
 func DumpJSON(vs ...any) string {
 	if len(vs) == 0 {
 		return `{"error": "DumpJSON called with no arguments"}`
@@ -222,7 +222,7 @@ func DumpJSON(vs ...any) string {
 
 	b, err := json.MarshalIndent(data, "", strings.Repeat(" ", indentWidth))
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return fmt.Sprintf(`{"error": "%q"}`, err.Error())
 	}
 	return string(b)
 }
