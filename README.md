@@ -96,6 +96,9 @@ func main() {
 	// HTML for web UI output
 	html := godump.DumpHTML(user)
 	fmt.Println("html", html)
+
+	// Print JSON directly to stdout
+	godump.DumpJSON(user)
 	
 	// Write to any io.Writer (e.g. file, buffer, logger)
 	godump.Fdump(os.Stderr, user)
@@ -118,6 +121,13 @@ func main() {
 	// Dump to HTML string
 	html = d.DumpHTML(user)
 	println("DumpHTML output:", html)
+
+	// Dump JSON using the Dumper (returns string)
+	jsonStr := d.DumpJSONStr(user)
+	fmt.Println("Dumper JSON string:", jsonStr)
+
+	// Print JSON directly from the Dumper
+	d.DumpJSON(user)
 
 	// Dump to custom writer (e.g. a string builder)
 	var sb strings.Builder
