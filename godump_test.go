@@ -1,8 +1,10 @@
 package godump
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"regexp"
@@ -978,19 +980,15 @@ func TestDumpJSON(t *testing.T) {
 		jsonStr := DumpJSONStr(user)
 
 		expected := `{
-  "name": "Alice",
-  "age": 30
-}`
+			"name": "Alice",
+			"age": 30
+		}`
 		assert.JSONEq(t, expected, jsonStr)
 	})
 
 	t.Run("multiple values", func(t *testing.T) {
 		jsonStr := DumpJSONStr("hello", 42, true)
-		expected := `[
-  "hello",
-  42,
-  true
-]`
+		expected := `["hello", 42, true]`
 		assert.JSONEq(t, expected, jsonStr)
 	})
 
@@ -1015,4 +1013,28 @@ func TestDumpJSON(t *testing.T) {
 		jsonStr := DumpJSONStr([]int{1, 2})
 		assert.JSONEq(t, "[1, 2]", jsonStr)
 	})
+
+	t.Run("Dumper.DumpJSON writes to writer", func(t *testing.T) {
+		var buf bytes.Buffer
+		d := NewDumper(WithWriter(&buf))
+		d.DumpJSON(map[string]int{"x": 1})
+		assert.JSONEq(t, `{"x": 1}`, buf.String())
+	})
+
+	t.Run("DumpJSON prints to stdout", func(t *testing.T) {
+		r, w, _ := os.Pipe()
+		done := make(chan struct{})
+
+		go func() {
+			NewDumper(WithWriter(w)).DumpJSON("hello")
+			w.Close()
+			close(done)
+		}()
+
+		output, _ := io.ReadAll(r)
+		<-done
+
+		assert.JSONEq(t, `"hello"`, strings.TrimSpace(string(output)))
+	})
+
 }
