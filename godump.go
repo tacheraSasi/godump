@@ -194,7 +194,7 @@ func (d *Dumper) DumpJSONStr(vs ...any) string {
 		errorJSON, marshalErr := json.Marshal(map[string]string{"error": err.Error()})
 		if marshalErr != nil {
 			// Fallback to raw JSON string if even that fails
-			return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+			return fmt.Sprintf(`{"error": "%q"}`, err.Error())
 		}
 		return string(errorJSON)
 	}
