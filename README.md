@@ -118,7 +118,7 @@ func main() {
 }
 ```
 
-## ⌥ Builder Options Usage
+## 🏗️ Builder Options Usage
 
 ```go
 package main
