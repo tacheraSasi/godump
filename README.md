@@ -116,11 +116,11 @@ func main() {
 
 	// Dump to string
 	out := d.DumpStr(user)
-	println("DumpStr output:", out)
+	fmt.Println("DumpStr output:", out)
 
 	// Dump to HTML string
 	html = d.DumpHTML(user)
-	println("DumpHTML output:", html)
+	fmt.Println("DumpHTML output:", html)
 
 	// Dump JSON using the Dumper (returns string)
 	jsonStr := d.DumpJSONStr(user)
@@ -133,7 +133,7 @@ func main() {
 	var sb strings.Builder
 	custom := godump.NewDumper(godump.WithWriter(&sb))
 	custom.Dump(user)
-	println("Dump to string builder:", sb.String())
+	fmt.Println("Dump to string builder:", sb.String())
 }
 ```
 
